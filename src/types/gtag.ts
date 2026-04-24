@@ -1,30 +1,29 @@
-// 1. Define your official event names
+// src/types/gtag.ts
+
 export const GTAG_EVENTS = {
   VIEW_ITEM: 'view_item',
   ADD_TO_CART: 'add_to_cart',
   BEGIN_CHECKOUT: 'begin_checkout',
+  ADD_SHIPPING_INFO: 'add_shipping_info',
+  ADD_PAYMENT_INFO: 'add_payment_info',
+  PURCHASE: 'purchase',
+  UPDATE_CART_QUANTITY: 'update_cart_quantity',
+  REMOVE_FROM_CART: 'remove_from_cart',
+  CLEAR_CART: 'clear_cart',
+  PAYMENT_FAILED: 'payment_failed',
 } as const;
 
 export type GtagEventName = typeof GTAG_EVENTS[keyof typeof GTAG_EVENTS];
 
-// 2. THE PROMISE: Tell TypeScript fireEvent exists everywhere
 declare global {
-  function fireEvent(
-    eventName: GtagEventName,
-    params?: Record<string, unknown>
-  ): void;
+  function fireEvent(eventName: GtagEventName, params?: Record<string, unknown>): void;
 }
 
-// 3. THE LOGIC: What happens when fireEvent is called
 function fireEventImpl(eventName: GtagEventName, params?: Record<string, unknown>) {
-  if (typeof gtag !== 'function') {
-    console.warn(`gtag is not defined. Skipping event: ${eventName}`);
-    return;
-  }
+  if (typeof gtag !== 'function') return;
   gtag('event', eventName, params);
 }
 
-// 4. THE FULFILLMENT: Attach it to the global browser window
-(globalThis as unknown as { fireEvent: typeof fireEventImpl }).fireEvent = fireEventImpl;
+(globalThis as any).fireEvent = fireEventImpl;
 
-export {}; // Keeps this file as a module
+export {};

@@ -1,6 +1,8 @@
-import type { ReactNode } from 'react'
+import { useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { CheckoutStepper } from './CheckoutStepper'
 import type { CartItem } from '../hooks/useCartReducer'
+import { GTAG_EVENTS } from '../types/gtag'
 
 interface CheckoutLayoutProps {
   step: number
@@ -14,6 +16,22 @@ const formatPrice = (amount: number): string =>
   `${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`
 
 export function CheckoutLayout({ step, children, cartItems, totalPrice, showSummary = true }: CheckoutLayoutProps) {
+
+  useEffect(() => {
+    if (step === 1 && cartItems.length > 0) {
+      fireEvent(GTAG_EVENTS.BEGIN_CHECKOUT, {
+        currency: 'RUB', 
+        value: totalPrice,
+        items: cartItems.map(({ item, quantity }) => ({
+          item_id: String(item.id),
+          item_name: item.name,
+          price: item.price,
+          quantity: quantity,
+        })),
+      });
+    }
+  }, [step, cartItems, totalPrice]);
+
   return (
     <div className="checkout">
       <CheckoutStepper currentStep={step} />

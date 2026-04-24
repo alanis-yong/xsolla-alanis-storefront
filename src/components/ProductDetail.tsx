@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react' // 1. Added useEffect
 import { useParams, Link } from 'react-router-dom'
 import { ItemImage } from './ItemImage'
 import { Breadcrumb } from './Breadcrumb'
 import { QuantitySelector } from './QuantitySelector'
 import { getCategory } from '../utils/categories'
+import { GTAG_EVENTS } from '../types/gtag' // 2. Added GTAG_EVENTS import
 import type { Item } from '../hooks/useItems'
 
 interface ProductDetailProps {
@@ -20,6 +21,21 @@ export function ProductDetail({ items, onAddToCart }: ProductDetailProps) {
   const [added, setAdded] = useState(false)
 
   const item = items.find((i) => i.id === Number(id))
+
+  useEffect(() => {
+    if (item) {
+      fireEvent(GTAG_EVENTS.VIEW_ITEM, {
+        currency: 'RUB', 
+        value: item.price,
+        items: [{
+          item_id: String(item.id),
+          item_name: item.name,
+          price: item.price,
+          quantity: 1
+        }]
+      });
+    }
+  }, [item]);
 
   if (!item) {
     return (

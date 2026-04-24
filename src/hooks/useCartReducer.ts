@@ -59,32 +59,61 @@ export const useCart = (items: Item[]) => {
   }, [items])
 
   const addToCart = async (item: Item) => {
-    const exist = cartItems.find(ci => ci.item.id === item.id);
-    const newQuantity = exist ? exist.quantity + 1 : 1
-    // Optimistic update: update UI first, then sync to API
-    dispatch({type: 'ADD', item, newQuantity, existing: !!exist})
+  const exist = cartItems.find(ci => ci.item.id === item.id);
+  const newQuantity = exist ? exist.quantity + 1 : 1
+  
+  dispatch({type: 'ADD', item, newQuantity, existing: !!exist})
 
-   fireEvent(GTAG_EVENTS.ADD_TO_CART, {
-  currency: 'MYR',
-  value: item.price / 100,
-  items: [{
-    item_id: item.id,
-    item_name: item.name
-  }]
-});
-
-    try {
-      await addCartItem(item.id, newQuantity)
-    } catch (error: any){
-      setError('Add to cart failed')
-    }
+  // Fire specific event based on if it's a NEW item or an INCREASE
+  if (exist) {
+    fireEvent(GTAG_EVENTS.UPDATE_CART_QUANTITY, {
+      item_id: String(item.id),
+      item_name: item.name,
+      new_quantity: newQuantity,
+      change_type: 'increase'
+    });
+  } else {
+    fireEvent(GTAG_EVENTS.ADD_TO_CART, {
+      currency: 'MYR',
+      value: item.price / 100,
+      items: [{
+        item_id: String(item.id),
+        item_name: item.name,
+        price: item.price / 100,
+        quantity: 1
+      }]
+    });
   }
+
+  try {
+    await addCartItem(item.id, newQuantity)
+  } catch (error: any){
+    setError('Add to cart failed')
+  }
+}
 
   const removeFromCart = (itemId: number) => {
-    dispatch({type: 'REMOVE', itemId})
+  const itemToRemove = cartItems.find(ci => ci.item.id === itemId);
+  
+  if (itemToRemove) {
+    fireEvent(GTAG_EVENTS.REMOVE_FROM_CART, {
+      item_id: String(itemId),
+      item_name: itemToRemove.item.name,
+      current_quantity: itemToRemove.quantity - 1
+    });
   }
 
-  const clearCart = () => dispatch({type: 'CLEAR'})
+  dispatch({type: 'REMOVE', itemId})
+}
+
+  const clearCart = () => {
+  fireEvent(GTAG_EVENTS.CLEAR_CART, {
+    items_count: cartItems.length,
+    total_value: totalPrice / 100
+  });
+
+  dispatch({type: 'CLEAR'});
+}
 
   const totalItems = cartItems.reduce((sum, ci) => sum + ci.quantity, 0)
   const totalPrice = cartItems.reduce((sum, ci) => sum + ci.item.price * ci.quantity,0)

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { GTAG_EVENTS } from '../types/gtag'
 
 interface PaymentFormProps {
   totalPrice: number
@@ -32,13 +33,27 @@ export function PaymentForm({ totalPrice, onSubmit }: PaymentFormProps) {
     return Object.keys(errs).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (validate()) {
-      onSubmit()
-      navigate('/checkout/confirmation')
-    }
+ const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (validate()) {
+    fireEvent(GTAG_EVENTS.ADD_PAYMENT_INFO, {
+      currency: 'RUB',
+      value: totalPrice,
+      payment_type: 'Credit Card',
+      coupon: form.promo || undefined
+    });
+
+    onSubmit();
+    navigate('/checkout/confirmation');
+
+  } else {
+    fireEvent(GTAG_EVENTS.PAYMENT_FAILED, {
+      error_type: 'Validation Error',
+      reason: Object.keys(errors).join(', ')
+    });
   }
+};
 
   const inputClass = (field: string) =>
     ['form-group__input', errors[field] && 'form-group__input--error'].filter(Boolean).join(' ')

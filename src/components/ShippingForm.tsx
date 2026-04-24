@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { GTAG_EVENTS } from '../types/gtag'
 
 export interface ShippingData {
   fullName: string
@@ -41,12 +42,20 @@ export function ShippingForm({ initialData, onSubmit }: ShippingFormProps) {
   }
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (validate()) {
-      onSubmit(form)
-      navigate('/checkout/payment')
-    }
+  e.preventDefault()
+  if (validate()) {
+    // 1. Fire the Event
+    fireEvent(GTAG_EVENTS.ADD_SHIPPING_INFO, {
+      currency: 'RUB',
+      // You can pass the city or postal code as custom parameters if you want!
+      shipping_tier: 'Standard', 
+      city: form.city
+    })
+
+    onSubmit(form)
+    navigate('/checkout/payment')
   }
+}
 
   const inputClass = (field: keyof ShippingData) =>
     ['form-group__input', errors[field] && 'form-group__input--error'].filter(Boolean).join(' ')
