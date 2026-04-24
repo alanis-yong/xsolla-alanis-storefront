@@ -8,12 +8,13 @@ interface CartPageProps {
   totalPrice: number
   onRemoveFromCart: (itemId: number) => void
   onClearCart: () => void
+  onUpdateQuantity: (itemId: number, newQuantity: number) => void
 }
 
 const formatPrice = (amount: number): string =>
   `${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`
 
-export function CartPage({ cartItems, totalPrice, onRemoveFromCart, onClearCart }: CartPageProps) {
+export function CartPage({ cartItems, totalPrice, onRemoveFromCart, onClearCart,onUpdateQuantity }: CartPageProps) {
   const navigate = useNavigate()
   const [paying, setPaying] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
@@ -81,8 +82,27 @@ export function CartPage({ cartItems, totalPrice, onRemoveFromCart, onClearCart 
                     <span className="cart-row__unit">{formatPrice(item.price)} each</span>
                   </div>
                   <div className="cart-row__qty">
-                    <span className="cart-row__qty-value">x{quantity}</span>
-                  </div>
+  <div className="qty-controls">
+    {/* Decrease Button */}
+    <button 
+      className="qty-btn"
+      onClick={() => onUpdateQuantity(item.id, Math.max(1, quantity - 1))}
+      disabled={quantity <= 1}
+    >
+      −
+    </button>
+
+    <span className="cart-row__qty-value">{quantity}</span>
+
+    {/* Increase Button */}
+    <button 
+      className="qty-btn"
+      onClick={() => onUpdateQuantity(item.id, quantity + 1)}
+    >
+      +
+    </button>
+  </div>
+</div>
                   <span className="cart-row__subtotal">{formatPrice(item.price * quantity)}</span>
                   <button
                     className="cart-row__remove"

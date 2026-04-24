@@ -1,17 +1,37 @@
+import { useEffect } from 'react' // 1. Add useEffect
 import { Link } from 'react-router-dom'
 import { CheckoutStepper } from './CheckoutStepper'
+import { GTAG_EVENTS } from '../types/gtag' // 2. Import your events
 
 interface ConfirmationPageProps {
   shippingAddress?: string
   itemCount: number
   totalPrice: number
+  // If you can pass cartItems here, it's better for GA4 reporting!
+  cartItems?: any[] 
 }
 
 const formatPrice = (amount: number): string =>
   `${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`
 
-export function ConfirmationPage({ shippingAddress, itemCount, totalPrice }: ConfirmationPageProps) {
+export function ConfirmationPage({ shippingAddress, itemCount, totalPrice, cartItems = [] }: ConfirmationPageProps) {
+  // We move orderId outside so it's stable for the useEffect
   const orderId = `#XS-${Math.floor(1000 + Math.random() * 9000)}`
+
+  // 3. Fire the Purchase Event
+  useEffect(() => {
+    fireEvent(GTAG_EVENTS.PURCHASE, {
+      transaction_id: orderId, 
+      value: totalPrice,  
+      currency: 'RUB',
+      items: cartItems.map(ci => ({
+        item_id: String(ci.item.id),
+        item_name: ci.item.name,
+        price: ci.item.price,
+        quantity: ci.quantity
+      }))
+    });
+  }, []);
 
   return (
     <div className="checkout">

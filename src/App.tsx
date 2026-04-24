@@ -113,7 +113,7 @@ function App() {
 
           {/* Cart (Step 1) */}
           <Route path="/cart" element={
-            <CartPage cartItems={cartItems} totalPrice={totalPrice} onRemoveFromCart={removeFromCart} onClearCart={clearCart} />
+            <CartPage cartItems={cartItems} totalPrice={totalPrice} onRemoveFromCart={removeFromCart} onClearCart={clearCart} onUpdateQuantity={updateQuantity} />
           } />
 
           {/* Shipping (Step 2) */}

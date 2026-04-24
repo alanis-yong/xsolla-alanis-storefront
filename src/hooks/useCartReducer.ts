@@ -10,6 +10,7 @@ export interface CartItem {
 
 type Action =
   | { type: 'ADD'; item: Item, newQuantity: number, existing: boolean }
+  | { type: 'UPDATE_QTY'; itemId: number; quantity: number }
   | { type: 'REMOVE'; itemId: number }
   | { type: 'CLEAR' }
   | { type: 'INIT'; cartItems: CartItem[] }
@@ -27,6 +28,10 @@ const cartReducer = (state: CartItem[], action: Action): CartItem[] => {
       return state.filter(ci => ci.item.id !== action.itemId)
     case 'CLEAR':
       return []
+    case 'UPDATE_QTY':
+  return state.map(ci => 
+    ci.item.id === action.itemId ? { ...ci, quantity: action.quantity } : ci
+  );
     default:
       return state
   }
@@ -117,5 +122,19 @@ export const useCart = (items: Item[]) => {
 
   const totalItems = cartItems.reduce((sum, ci) => sum + ci.quantity, 0)
   const totalPrice = cartItems.reduce((sum, ci) => sum + ci.item.price * ci.quantity,0)
-  return { cartItems, addToCart, removeFromCart, clearCart, totalItems, totalPrice, loading, error }
+
+const updateQuantity = (itemId: number, newQuantity: number) => {
+    const item = cartItems.find(ci => ci.item.id === itemId);
+    if (item) {
+      fireEvent(GTAG_EVENTS.UPDATE_CART_QUANTITY, {
+        item_id: String(itemId),
+        item_name: item.item.name,
+        new_quantity: newQuantity,
+        change_type: newQuantity > item.quantity ? 'increase' : 'decrease'
+      });
+      dispatch({ type: 'UPDATE_QTY', itemId, quantity: newQuantity });
+    }
+  };
+
+  return { cartItems, addToCart, removeFromCart, clearCart, updateQuantity, totalItems, totalPrice, loading, error }
 }
