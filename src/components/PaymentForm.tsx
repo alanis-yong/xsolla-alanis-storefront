@@ -63,6 +63,8 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
         }))
       })
 
+      throw new Error("REJECTED: Insufficient Funds");
+
       /*
       const response = { order_id: `DEMO_${Date.now()}` };
 
