@@ -31,7 +31,7 @@ function App() {
   const { items, loading, error } = useItems()
   const [showLogin, setShowLogin] = useState(false)
   const [tokenEmail, setTokenEmail] = useState<string | null>(getTokenEmail)
-  const { cartItems, addToCart, removeFromCart, clearCart, totalItems, totalPrice } = useCart(items)
+  const { cartItems, addToCart, removeFromCart, clearCart, totalItems, totalPrice, updateQuantity } = useCart(items)
   const location = useLocation()
   const [activeCategory, setActiveCategory] = useState<Category>('All')
   const [shippingData, setShippingData] = useState<ShippingData | undefined>()
