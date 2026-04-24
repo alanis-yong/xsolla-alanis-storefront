@@ -1,19 +1,23 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { GTAG_EVENTS } from '../types/gtag'
+import { createOrder } from '../api/api' // Ensure this is imported
+import type { CartItem } from '../hooks/useCartReducer'
 
 interface PaymentFormProps {
   totalPrice: number
+  cartItems: CartItem[] // Added this to props
   onSubmit: () => void
 }
 
 const formatPrice = (amount: number): string =>
   `${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₽`
 
-export function PaymentForm({ totalPrice, onSubmit }: PaymentFormProps) {
+export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProps) {
   const navigate = useNavigate()
   const [form, setForm] = useState({ cardNumber: '', name: '', expiry: '', cvc: '', promo: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [paying, setPaying] = useState(false)
 
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [field]: e.target.value })
@@ -33,27 +37,76 @@ export function PaymentForm({ totalPrice, onSubmit }: PaymentFormProps) {
     return Object.keys(errs).length === 0
   }
 
- const handleSubmit = (e: React.FormEvent) => {
-  e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
 
-  if (validate()) {
-    fireEvent(GTAG_EVENTS.ADD_PAYMENT_INFO, {
-      currency: 'RUB',
-      value: totalPrice,
-      payment_type: 'Credit Card',
-      coupon: form.promo || undefined
-    });
+    if (!validate()) {
+      fireEvent(GTAG_EVENTS.PAYMENT_FAILED, {
+        error_type: 'Validation Error',
+        reason: 'Form fields missing or invalid'
+      })
+      return
+    }
 
-    onSubmit();
-    navigate('/checkout/confirmation');
+    setPaying(true)
 
-  } else {
-    fireEvent(GTAG_EVENTS.PAYMENT_FAILED, {
-      error_type: 'Validation Error',
-      reason: Object.keys(errors).join(', ')
-    });
+    try {
+      // 1. Fire Add Payment Info (User has clicked Pay with valid info)
+      fireEvent(GTAG_EVENTS.ADD_PAYMENT_INFO, {
+        currency: 'RUB',
+        value: totalPrice,
+        payment_type: 'Credit Card',
+        items: cartItems.map(ci => ({
+          item_id: String(ci.item.id),
+          item_name: ci.item.name,
+          price: ci.item.price,
+          quantity: ci.quantity
+        }))
+      })
+
+      const line_items = cartItems.map(({ item, quantity }) => ({
+        item_id: item.id,
+        quantity,
+        price: item.price,
+      }))
+
+      // --- 🟢 SCENARIO 1: SUCCESS (Uncomment for real demo) ---
+      const response = await createOrder(line_items, totalPrice)
+      
+      fireEvent(GTAG_EVENTS.PURCHASE, {
+        transaction_id: response?.order_id || `T_${Date.now()}`,
+        value: totalPrice,
+        currency: 'RUB',
+        coupon: form.promo || undefined,
+        items: cartItems.map(ci => ({
+          item_id: String(ci.item.id),
+          item_name: ci.item.name,
+          price: ci.item.price,
+          quantity: ci.quantity
+        }))
+      })
+
+      onSubmit() // This clears the cart in App.tsx
+      navigate('/checkout/confirmation')
+
+      // --- 🔴 SCENARIO 2: FAILURE (Uncomment to demo "Red Numbers") ---
+      /* console.log('Simulating rejection for items:', line_items);
+      throw new Error("REJECTED: Insufficient Funds"); 
+      */
+
+    } catch (err: any) {
+      // Catch real API errors or our simulated error
+      fireEvent(GTAG_EVENTS.PAYMENT_FAILED, {
+        error_type: 'PAYMENT_GATEWAY_ERROR',
+        reason: err.message || 'Transaction failed'
+      })
+      
+      // Update local error state to show user
+      setErrors({ submit: err.message || 'Payment failed. Please try again.' })
+    } finally {
+      setPaying(false)
+    }
   }
-};
 
   const inputClass = (field: string) =>
     ['form-group__input', errors[field] && 'form-group__input--error'].filter(Boolean).join(' ')
@@ -62,43 +115,49 @@ export function PaymentForm({ totalPrice, onSubmit }: PaymentFormProps) {
     <form className="checkout-form" onSubmit={handleSubmit}>
       <h2 className="checkout-form__title">Payment Details</h2>
 
+      {errors.submit && (
+        <div className="form-group__error-main" style={{ color: '#ef4444', marginBottom: '1rem' }}>
+          {errors.submit}
+        </div>
+      )}
+
       <div className="form-group">
         <label className="form-group__label">Card Number</label>
-        <input className={inputClass('cardNumber')} value={form.cardNumber} onChange={set('cardNumber')} placeholder="4242 4242 4242 4242" />
+        <input className={inputClass('cardNumber')} value={form.cardNumber} onChange={set('cardNumber')} placeholder="4242 4242 4242 4242" disabled={paying} />
         {errors.cardNumber && <span className="form-group__error">{errors.cardNumber}</span>}
       </div>
 
       <div className="form-group">
         <label className="form-group__label">Cardholder Name</label>
-        <input className={inputClass('name')} value={form.name} onChange={set('name')} placeholder="JOHN DOE" />
+        <input className={inputClass('name')} value={form.name} onChange={set('name')} placeholder="JOHN DOE" disabled={paying} />
         {errors.name && <span className="form-group__error">{errors.name}</span>}
       </div>
 
       <div className="form-row">
         <div className="form-group">
           <label className="form-group__label">Expiry Date</label>
-          <input className={inputClass('expiry')} value={form.expiry} onChange={set('expiry')} placeholder="MM / YY" />
+          <input className={inputClass('expiry')} value={form.expiry} onChange={set('expiry')} placeholder="MM / YY" disabled={paying} />
           {errors.expiry && <span className="form-group__error">{errors.expiry}</span>}
         </div>
         <div className="form-group">
           <label className="form-group__label">CVC</label>
-          <input className={inputClass('cvc')} value={form.cvc} onChange={set('cvc')} placeholder="123" />
+          <input className={inputClass('cvc')} value={form.cvc} onChange={set('cvc')} placeholder="123" disabled={paying} />
           {errors.cvc && <span className="form-group__error">{errors.cvc}</span>}
         </div>
       </div>
 
       <div className="form-group">
         <label className="form-group__label">Promo Code (optional)</label>
-        <input className={inputClass('promo')} value={form.promo} onChange={set('promo')} placeholder="Enter code" />
+        <input className={inputClass('promo')} value={form.promo} onChange={set('promo')} placeholder="Enter code" disabled={paying} />
         {errors.promo && <span className="form-group__error">{errors.promo}</span>}
       </div>
 
       <div className="checkout-form__actions">
-        <button type="button" className="checkout-form__btn checkout-form__btn--back" onClick={() => navigate('/checkout/shipping')}>
+        <button type="button" className="checkout-form__btn checkout-form__btn--back" onClick={() => navigate('/checkout/shipping')} disabled={paying}>
           ← Back
         </button>
-        <button type="submit" className="checkout-form__btn checkout-form__btn--next">
-          Pay {formatPrice(totalPrice)}
+        <button type="submit" className="checkout-form__btn checkout-form__btn--next" disabled={paying}>
+          {paying ? 'Processing...' : `Pay ${formatPrice(totalPrice)}`}
         </button>
       </div>
     </form>

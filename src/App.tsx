@@ -126,7 +126,7 @@ function App() {
           {/* Payment (Step 3) */}
           <Route path="/checkout/payment" element={
             <CheckoutLayout step={2} cartItems={cartItems} totalPrice={totalPrice}>
-              <PaymentForm totalPrice={totalPrice} onSubmit={() => clearCart()} />
+              <PaymentForm totalPrice={totalPrice} cartItems={cartItems} onSubmit={() => clearCart()} />
             </CheckoutLayout>
           } />
 
