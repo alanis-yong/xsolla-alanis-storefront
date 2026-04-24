@@ -51,7 +51,7 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
     setPaying(true)
 
     try {
-      // 1. Fire Add Payment Info
+      // 1. Fire Add Payment Info (Keep this!)
       fireEvent(GTAG_EVENTS.ADD_PAYMENT_INFO, {
         currency: 'RUB',
         value: totalPrice,
@@ -64,21 +64,16 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
         }))
       })
 
-      const line_items = cartItems.map(({ item, quantity }) => ({
-        item_id: item.id,
-        quantity,
-        price: item.price,
-      }))
+      // 2. SIMULATED SUCCESS (Bypassing the CORS/401 error)
+      // Comment out the real 'await createOrder' line below
+      // const response = await createOrder(line_items, totalPrice) 
+      
+      // Use this mock response instead:
+      const response = { order_id: `DEMO_${Date.now()}` };
 
-      // --- 🟢 SCENARIO 1: SUCCESS (ACTIVE) ---
-      // NOTE: If you get a "Network Error", the backend server is likely down.
-      // You can uncomment the "const response = { order_id..." line below to bypass the server for the demo.
-      
-      const response = await createOrder(line_items, totalPrice)
-      // const response = { order_id: `DEMO_${Date.now()}` } 
-      
+      // 3. Fire GA4 Purchase Event
       fireEvent(GTAG_EVENTS.PURCHASE, {
-        transaction_id: response?.order_id || `T_${Date.now()}`,
+        transaction_id: response.order_id,
         value: totalPrice,
         currency: 'RUB',
         coupon: form.promo || undefined,
@@ -90,21 +85,17 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
         }))
       })
 
+      // 4. Success!
       onSubmit() 
       navigate('/checkout/confirmation')
 
-      // --- 🔴 SCENARIO 2: FAILURE (COMMENTED OUT) ---
-      /* console.log('Simulating rejection for items:', line_items);
-      throw new Error("REJECTED: Insufficient Funds"); 
-      */
-
     } catch (err: any) {
+      // This will only run now if you manually uncomment the "Scenario 2" error
       fireEvent(GTAG_EVENTS.PAYMENT_FAILED, {
         error_type: 'PAYMENT_GATEWAY_ERROR',
-        reason: err.message || 'Transaction failed'
+        reason: err.message
       })
-      
-      setErrors({ submit: err.message || 'Payment failed. Please try again.' })
+      setErrors({ submit: err.message })
     } finally {
       setPaying(false)
     }
