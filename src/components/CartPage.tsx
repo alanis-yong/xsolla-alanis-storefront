@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import type { CartItem } from '../hooks/useCartReducer'
 import { createOrder } from '../api/api'
+import { GTAG_EVENTS } from '../types/gtag'
+
 
 interface CartPageProps {
   cartItems: CartItem[]
@@ -25,23 +27,48 @@ export function CartPage({ cartItems, totalPrice, onRemoveFromCart, onClearCart,
   }
 
   const handlePay = async () => {
-    setPaying(true)
-    try {
-      const line_items = cartItems.map(({ item, quantity }) => ({
-        item_id: item.id,
-        quantity,
-        price: item.price,
+  setPaying(true)
+  try {
+    const line_items = cartItems.map(({ item, quantity }) => ({
+      item_id: item.id,
+      quantity,
+      price: item.price,
+    }))
+
+    // --- 🟢 SCENARIO 1: SUCCESS (Uncomment to demo purchase) ---
+    /*
+    const response = await createOrder(line_items, totalPrice)
+    fireEvent(GTAG_EVENTS.PURCHASE, {
+      transaction_id: response?.order_id || `T_${Date.now()}`,
+      value: totalPrice,
+      currency: 'RUB',
+      items: cartItems.map(ci => ({
+        item_id: String(ci.item.id),
+        item_name: ci.item.name,
+        price: ci.item.price,
+        quantity: ci.quantity
       }))
-      const response = await createOrder(line_items, totalPrice)
-      console.log('response', response)
-      showToast('success', 'Payment successful!')
-      onClearCart()
-    } catch {
-      showToast('error', 'Payment failed')
-    } finally {
-      setPaying(false)
-    }
+    })
+    showToast('success', 'Payment successful!')
+    onClearCart()
+    navigate('/checkout/confirmation')
+    */
+
+    // --- 🔴 SCENARIO 2: FAILURE (Uncomment to demo "Red Numbers") ---
+    // If Demoing failure, you can use line_items here to show what failed
+    console.log('Attempting payment for:', line_items); 
+    throw new Error("REJECTED: Insufficient Funds")
+
+  } catch (err: any) {
+    fireEvent(GTAG_EVENTS.PAYMENT_FAILED, {
+      error_type: 'PAYMENT_GATEWAY_ERROR',
+      reason: err.message
+    })
+    showToast('error', `Payment failed: ${err.message}`)
+  } finally {
+    setPaying(false)
   }
+}
 
   return (
     <>
@@ -134,7 +161,7 @@ export function CartPage({ cartItems, totalPrice, onRemoveFromCart, onClearCart,
               </div>
               <button
                 className="checkout-button"
-                onClick={() => navigate('/checkout/shipping')}
+                onClick={handlePay}
                 disabled={cartItems.length === 0}
               >
                 Proceed to Checkout →

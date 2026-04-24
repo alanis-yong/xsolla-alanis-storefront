@@ -50,7 +50,9 @@ export const addCartItem = async (item_id: number, quantity: number) => {
 }
 
 // Lecture: Create Payment Order
-export const createOrder = async (line_items: {item_id: number, quantity: number, price: number}, total: number) => {
-  const response = await api.post('/orders',{line_items, total},{headers: {'Idempotency-Key' : crypto.randomUUID()}})
+export const createOrder = async (line_items: {item_id: number, quantity: number, price: number}[], total: number) => {
+  const response = await api.post('/orders', { line_items, total }, { 
+    headers: { 'Idempotency-Key': crypto.randomUUID() } 
+  })
   return response.data
 }
