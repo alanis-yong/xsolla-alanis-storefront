@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { GTAG_EVENTS } from '../types/gtag'
-import { createOrder } from '../api/api' // Ensure this is imported
+import { createOrder } from '../api/api' 
 import type { CartItem } from '../hooks/useCartReducer'
 
 interface PaymentFormProps {
   totalPrice: number
-  cartItems: CartItem[] // Added this to props
+  cartItems: CartItem[] 
   onSubmit: () => void
 }
 
@@ -51,7 +51,7 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
     setPaying(true)
 
     try {
-      // 1. Fire Add Payment Info (User has clicked Pay with valid info)
+      // 1. Fire Add Payment Info
       fireEvent(GTAG_EVENTS.ADD_PAYMENT_INFO, {
         currency: 'RUB',
         value: totalPrice,
@@ -70,8 +70,12 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
         price: item.price,
       }))
 
-      // --- 🟢 SCENARIO 1: SUCCESS (Uncomment for real demo) ---
+      // --- 🟢 SCENARIO 1: SUCCESS (ACTIVE) ---
+      // NOTE: If you get a "Network Error", the backend server is likely down.
+      // You can uncomment the "const response = { order_id..." line below to bypass the server for the demo.
+      
       const response = await createOrder(line_items, totalPrice)
+      // const response = { order_id: `DEMO_${Date.now()}` } 
       
       fireEvent(GTAG_EVENTS.PURCHASE, {
         transaction_id: response?.order_id || `T_${Date.now()}`,
@@ -86,22 +90,20 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
         }))
       })
 
-      onSubmit() // This clears the cart in App.tsx
+      onSubmit() 
       navigate('/checkout/confirmation')
 
-      // --- 🔴 SCENARIO 2: FAILURE (Uncomment to demo "Red Numbers") ---
+      // --- 🔴 SCENARIO 2: FAILURE (COMMENTED OUT) ---
       /* console.log('Simulating rejection for items:', line_items);
       throw new Error("REJECTED: Insufficient Funds"); 
       */
 
     } catch (err: any) {
-      // Catch real API errors or our simulated error
       fireEvent(GTAG_EVENTS.PAYMENT_FAILED, {
         error_type: 'PAYMENT_GATEWAY_ERROR',
         reason: err.message || 'Transaction failed'
       })
       
-      // Update local error state to show user
       setErrors({ submit: err.message || 'Payment failed. Please try again.' })
     } finally {
       setPaying(false)
@@ -116,7 +118,7 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
       <h2 className="checkout-form__title">Payment Details</h2>
 
       {errors.submit && (
-        <div className="form-group__error-main" style={{ color: '#ef4444', marginBottom: '1rem' }}>
+        <div className="form-group__error-main" style={{ color: '#ef4444', marginBottom: '1rem', fontSize: '0.9rem' }}>
           {errors.submit}
         </div>
       )}
