@@ -1,6 +1,7 @@
 import { useReducer, useEffect, useState } from 'react'
 import type { Item } from './useItems'
 import { getCart, addCartItem } from '../api/api'
+import { GTAG_EVENTS } from '../types/gtag';
 
 export interface CartItem {
   item: Item
@@ -63,16 +64,14 @@ export const useCart = (items: Item[]) => {
     // Optimistic update: update UI first, then sync to API
     dispatch({type: 'ADD', item, newQuantity, existing: !!exist})
 
-   gtag('event', 'add_to_cart', {
-        currency: 'MYR', 
-        value: item.price, // Dynamic: e.g. 450.00 for keyboard, 25.00 for tote
-        items: [{
-            item_id: String(item.id),
-            item_name: item.name,    // Dynamic: The actual name from the DB
-            price: item.price, // Dynamic: The actual price from the DB
-            quantity: 1,             // Since the click adds 1 item
-        }],
-    });
+   fireEvent(GTAG_EVENTS.ADD_TO_CART, {
+  currency: 'MYR',
+  value: item.price / 100,
+  items: [{
+    item_id: item.id,
+    item_name: item.name
+  }]
+});
 
     try {
       await addCartItem(item.id, newQuantity)
