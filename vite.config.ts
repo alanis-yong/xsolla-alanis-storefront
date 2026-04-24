@@ -8,7 +8,7 @@ export default defineConfig({
     proxy: {
       // Same-origin in dev so the browser does not block requests (checkout-api has no CORS headers).
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'https://checkout-api-2.onrender.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
