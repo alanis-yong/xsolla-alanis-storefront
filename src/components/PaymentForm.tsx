@@ -51,7 +51,6 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
     setPaying(true)
 
     try {
-      // 1. Fire Add Payment Info (Keep this!)
       fireEvent(GTAG_EVENTS.ADD_PAYMENT_INFO, {
         currency: 'RUB',
         value: totalPrice,
@@ -64,14 +63,9 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
         }))
       })
 
-      // 2. SIMULATED SUCCESS (Bypassing the CORS/401 error)
-      // Comment out the real 'await createOrder' line below
-      // const response = await createOrder(line_items, totalPrice) 
-      
-      // Use this mock response instead:
+      /*
       const response = { order_id: `DEMO_${Date.now()}` };
 
-      // 3. Fire GA4 Purchase Event
       fireEvent(GTAG_EVENTS.PURCHASE, {
         transaction_id: response.order_id,
         value: totalPrice,
@@ -85,12 +79,11 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
         }))
       })
 
-      // 4. Success!
       onSubmit() 
       navigate('/checkout/confirmation')
+      */
 
     } catch (err: any) {
-      // This will only run now if you manually uncomment the "Scenario 2" error
       fireEvent(GTAG_EVENTS.PAYMENT_FAILED, {
         error_type: 'PAYMENT_GATEWAY_ERROR',
         reason: err.message
