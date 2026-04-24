@@ -80,11 +80,11 @@ export const useCart = (items: Item[]) => {
   } else {
     fireEvent(GTAG_EVENTS.ADD_TO_CART, {
       currency: 'MYR',
-      value: item.price / 100,
+      value: item.price,
       items: [{
         item_id: String(item.id),
         item_name: item.name,
-        price: item.price / 100,
+        price: item.price,
         quantity: 1
       }]
     });

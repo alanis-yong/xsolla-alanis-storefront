@@ -63,9 +63,8 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
         }))
       })
 
-      throw new Error("REJECTED: Insufficient Funds");
+      // throw new Error("REJECTED: Insufficient Funds");
 
-      /*
       const response = { order_id: `DEMO_${Date.now()}` };
 
       fireEvent(GTAG_EVENTS.PURCHASE, {
@@ -83,7 +82,7 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
 
       onSubmit() 
       navigate('/checkout/confirmation')
-      */
+
 
     } catch (err: any) {
       fireEvent(GTAG_EVENTS.PAYMENT_FAILED, {
