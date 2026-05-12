@@ -20,8 +20,13 @@ declare global {
 }
 
 function fireEventImpl(eventName: GtagEventName, params?: Record<string, unknown>) {
-  if (typeof gtag !== 'function') return;
-  gtag('event', eventName, params);
+  if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+    window.gtag('event', eventName, {
+      ...params,
+      'debug_mode': true // <--- Add this line here
+    });
+    console.log(`[GA4 Event Sent]: ${eventName}`);
+  }
 }
 
 (globalThis as any).fireEvent = fireEventImpl;
