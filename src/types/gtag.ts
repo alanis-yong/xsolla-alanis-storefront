@@ -21,11 +21,14 @@ declare global {
 
 function fireEventImpl(eventName: GtagEventName, params?: Record<string, unknown>) {
   if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+    // We manually inject 'debug_mode': true into the parameters
     window.gtag('event', eventName, {
       ...params,
-      'debug_mode': true // <--- Add this line here
+      'debug_mode': true 
     });
-    console.log(`[GA4 Event Sent]: ${eventName}`);
+    console.log(`🚀 [GA4 Debug] Sent: ${eventName}`, params);
+  } else {
+    console.warn('❌ gtag not found');
   }
 }
 
