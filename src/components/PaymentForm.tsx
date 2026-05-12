@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react' // 1. Added useEffect
 import { useNavigate } from 'react-router-dom'
 import { GTAG_EVENTS } from '../types/gtag'
-import { createOrder } from '../api/api' 
-import type { CartItem } from '../hooks/useCartReducer'
+// Assuming fireEvent is globally available or imported from your gtag file
+// import { fireEvent } from '../types/gtag' 
 
 interface PaymentFormProps {
   totalPrice: number
@@ -18,6 +18,22 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
   const [form, setForm] = useState({ cardNumber: '', name: '', expiry: '', cvc: '', promo: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [paying, setPaying] = useState(false)
+
+  // 2. TRIGGER ON PAGE LOAD: Fires as soon as the user sees the payment form
+  useEffect(() => {
+    fireEvent(GTAG_EVENTS.ADD_PAYMENT_INFO, {
+      currency: 'RUB',
+      value: totalPrice,
+      payment_type: 'Credit Card',
+      items: cartItems.map(ci => ({
+        item_id: String(ci.item.id),
+        item_name: ci.item.name,
+        price: ci.item.price,
+        quantity: ci.quantity
+      }))
+    });
+    console.log("💳 [GA4 Debug] Payment Step Reached");
+  }, []); // Empty array means this runs once on mount
 
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [field]: e.target.value })
@@ -51,22 +67,11 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
     setPaying(true)
 
     try {
-      fireEvent(GTAG_EVENTS.ADD_PAYMENT_INFO, {
-        currency: 'RUB',
-        value: totalPrice,
-        payment_type: 'Credit Card',
-        items: cartItems.map(ci => ({
-          item_id: String(ci.item.id),
-          item_name: ci.item.name,
-          price: ci.item.price,
-          quantity: ci.quantity
-        }))
-      })
-
-      // throw new Error("REJECTED: Insufficient Funds");
+      // NOTE: ADD_PAYMENT_INFO was removed from here to avoid double-tracking
 
       const response = { order_id: `DEMO_${Date.now()}` };
 
+      // Log the successful purchase
       fireEvent(GTAG_EVENTS.PURCHASE, {
         transaction_id: response.order_id,
         value: totalPrice,
@@ -82,7 +87,6 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
 
       onSubmit() 
       navigate('/checkout/confirmation')
-
 
     } catch (err: any) {
       fireEvent(GTAG_EVENTS.PAYMENT_FAILED, {
