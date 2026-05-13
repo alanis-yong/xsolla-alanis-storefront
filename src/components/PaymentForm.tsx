@@ -19,22 +19,6 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [paying, setPaying] = useState(false)
 
-  // 2. TRIGGER ON PAGE LOAD: Fires as soon as the user sees the payment form
-  useEffect(() => {
-    fireEvent(GTAG_EVENTS.ADD_PAYMENT_INFO, {
-      currency: 'RUB',
-      value: totalPrice,
-      payment_type: 'Credit Card',
-      items: cartItems.map(ci => ({
-        item_id: String(ci.item.id),
-        item_name: ci.item.name,
-        price: ci.item.price,
-        quantity: ci.quantity
-      }))
-    });
-    console.log("💳 [GA4 Debug] Payment Step Reached");
-  }, []); // Empty array means this runs once on mount
-
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [field]: e.target.value })
     if (errors[field]) setErrors({ ...errors, [field]: '' })
@@ -67,7 +51,18 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
     setPaying(true)
 
     try {
-      // NOTE: ADD_PAYMENT_INFO was removed from here to avoid double-tracking
+    
+      fireEvent(GTAG_EVENTS.ADD_PAYMENT_INFO, {
+      currency: 'RUB',
+      value: totalPrice,
+      payment_type: 'Credit Card',
+      items: cartItems.map(ci => ({
+        item_id: String(ci.item.id),
+        item_name: ci.item.name,
+        price: ci.item.price,
+        quantity: ci.quantity
+      }))
+    });
 
       const response = { order_id: `DEMO_${Date.now()}` };
 
