@@ -24,7 +24,7 @@ function fireEventImpl(eventName: GtagEventName, params?: Record<string, unknown
     // We manually inject 'debug_mode': true into the parameters
     window.gtag('event', eventName, {
       ...params,
-      'debug_mode': true, { transport_type: 'beacon' } 
+      'debug_mode': true, transport_type: 'beacon' } 
     });
     console.log(`🚀 [GA4 Debug] Sent: ${eventName}`, params);
   } else {
