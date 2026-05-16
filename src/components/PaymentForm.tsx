@@ -63,10 +63,14 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
         quantity: ci.quantity
       }))
     });
-      console.log("Payment event triggered. Pausing before redirect...");
-      debugger;
-      onSubmit() 
-      navigate('/checkout/confirmation')
+      setTimeout(() => {
+  console.log("Payment Info sent to network. Pausing BEFORE redirect...");
+  
+  debugger; 
+
+  onSubmit();
+  navigate('/checkout/confirmation');
+}, 200);
     } catch (err: any) {
       fireEvent(GTAG_EVENTS.PAYMENT_FAILED, {
         error_type: 'PAYMENT_GATEWAY_ERROR',
