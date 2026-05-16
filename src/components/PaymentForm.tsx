@@ -63,6 +63,7 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
         quantity: ci.quantity
       }))
     });
+      debugger;
       onSubmit() 
       navigate('/checkout/confirmation')
     } catch (err: any) {
