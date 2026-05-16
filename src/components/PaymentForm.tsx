@@ -63,7 +63,10 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
         quantity: ci.quantity
       }))
     });
-      debugger;
+      setTimeout(() => {
+  console.log("Event sent! Pausing now...");
+  debugger; 
+}, 200);
       onSubmit() 
       navigate('/checkout/confirmation')
     } catch (err: any) {
