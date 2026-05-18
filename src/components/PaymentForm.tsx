@@ -51,32 +51,29 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
     setPaying(true)
 
     try {
-    
-      // 1. We wrap everything in the timer
-setTimeout(() => {
-  // 2. Fire the event FIRST
-  fireEvent(GTAG_EVENTS.ADD_PAYMENT_INFO, {
-    currency: 'RUB',
-    value: totalPrice,
-    payment_type: 'Credit Card',
-    items: cartItems.map(ci => ({
-      item_id: String(ci.item.id),
-      item_name: ci.item.name,
-      price: ci.item.price,
-      quantity: ci.quantity
-    }))
-  });
+      // 1. Trigger the event
+      fireEvent(GTAG_EVENTS.ADD_PAYMENT_INFO, {
+        currency: 'RUB',
+        value: totalPrice,
+        payment_type: 'Credit Card',
+        items: cartItems.map(ci => ({
+          item_id: String(ci.item.id),
+          item_name: ci.item.name,
+          price: ci.item.price,
+          quantity: ci.quantity
+        }))
+      });
 
-  // 3. Give gtag 100ms to actually put the request in the Network Tab
-  setTimeout(() => {
-    console.log("Check Network tab now... then close tab!");
-    debugger; 
+      // 2. WAIT before the debugger to let the "beacon" fly out
+      setTimeout(() => {
+        console.log("Packet should be in the air. Pausing now!");
+        
+        debugger; // <-- NOW CLOSE THE TAB WHEN THIS HITS
 
-    onSubmit();
-    navigate('/checkout/confirmation');
-  }, 100); 
-
-}, 10);
+        // 3. This stays trapped inside the timeout so Purchase never fires
+        onSubmit();
+        navigate('/checkout/confirmation');
+      }, 500); 
     } catch (err: any) {
       fireEvent(GTAG_EVENTS.PAYMENT_FAILED, {
         error_type: 'PAYMENT_GATEWAY_ERROR',
