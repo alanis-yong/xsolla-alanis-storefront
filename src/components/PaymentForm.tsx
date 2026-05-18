@@ -64,16 +64,15 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
         }))
       });
 
-      // 2. WAIT before the debugger to let the "beacon" fly out
-      setTimeout(() => {
-        console.log("Packet should be in the air. Pausing now!");
-        
-        debugger; // <-- NOW CLOSE THE TAB WHEN THIS HITS
+      console.log("PAYMENT EVENT FIRED! Check your DebugView now.");
 
-        // 3. This stays trapped inside the timeout so Purchase never fires
-        onSubmit();
-        navigate('/checkout/confirmation');
-      }, 500); 
+      // 2. COMMENT OUT these lines temporarily
+      // onSubmit(); 
+      // navigate('/checkout/confirmation');
+
+      // 3. Add an alert so the page stops and stays on /checkout/payment
+      alert("Payment Event Sent! Check DebugView. Do NOT click OK yet.");
+
     } catch (err: any) {
       fireEvent(GTAG_EVENTS.PAYMENT_FAILED, {
         error_type: 'PAYMENT_GATEWAY_ERROR',
