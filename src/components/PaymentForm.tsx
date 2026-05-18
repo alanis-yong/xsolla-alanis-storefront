@@ -52,25 +52,31 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
 
     try {
     
-      fireEvent(GTAG_EVENTS.ADD_PAYMENT_INFO, {
-      currency: 'RUB',
-      value: totalPrice,
-      payment_type: 'Credit Card',
-      items: cartItems.map(ci => ({
-        item_id: String(ci.item.id),
-        item_name: ci.item.name,
-        price: ci.item.price,
-        quantity: ci.quantity
-      }))
-    });
-      setTimeout(() => {
-  console.log("Payment Info sent to network. Pausing BEFORE redirect...");
-  
-  debugger; 
+      // 1. We wrap everything in the timer
+setTimeout(() => {
+  // 2. Fire the event FIRST
+  fireEvent(GTAG_EVENTS.ADD_PAYMENT_INFO, {
+    currency: 'RUB',
+    value: totalPrice,
+    payment_type: 'Credit Card',
+    items: cartItems.map(ci => ({
+      item_id: String(ci.item.id),
+      item_name: ci.item.name,
+      price: ci.item.price,
+      quantity: ci.quantity
+    }))
+  });
 
-  onSubmit();
-  navigate('/checkout/confirmation');
-}, 200);
+  // 3. Give gtag 100ms to actually put the request in the Network Tab
+  setTimeout(() => {
+    console.log("Check Network tab now... then close tab!");
+    debugger; 
+
+    onSubmit();
+    navigate('/checkout/confirmation');
+  }, 100); 
+
+}, 10);
     } catch (err: any) {
       fireEvent(GTAG_EVENTS.PAYMENT_FAILED, {
         error_type: 'PAYMENT_GATEWAY_ERROR',
