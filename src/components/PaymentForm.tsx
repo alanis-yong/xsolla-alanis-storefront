@@ -51,7 +51,7 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
     setPaying(true)
 
     try {
-      // 1. Trigger the event
+     // 1. Fire the event
       fireEvent(GTAG_EVENTS.ADD_PAYMENT_INFO, {
         currency: 'RUB',
         value: totalPrice,
@@ -63,16 +63,16 @@ export function PaymentForm({ totalPrice, cartItems, onSubmit }: PaymentFormProp
           quantity: ci.quantity
         }))
       });
-
-      console.log("PAYMENT EVENT FIRED! Check your DebugView now.");
-
-      // 2. COMMENT OUT these lines temporarily
-      // onSubmit(); 
-      // navigate('/checkout/confirmation');
-
-      // 3. Add an alert so the page stops and stays on /checkout/payment
-      alert("Payment Event Sent! Check DebugView. Do NOT click OK yet.");
-
+      
+      // 2. Wait 1 second (1000ms) to let the "beacon" leave the network card
+      setTimeout(() => {
+        // 3. NOW show the alert to stop the navigation
+        alert("Check DebugView NOW. The event should be there!");
+        
+        // 4. Leave these commented out for the test
+        // onSubmit();
+        // navigate('/checkout/confirmation');
+      }, 1000);
     } catch (err: any) {
       fireEvent(GTAG_EVENTS.PAYMENT_FAILED, {
         error_type: 'PAYMENT_GATEWAY_ERROR',
